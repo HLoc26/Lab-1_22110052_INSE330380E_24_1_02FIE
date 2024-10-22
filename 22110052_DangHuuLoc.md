@@ -289,9 +289,21 @@ sudo apt-get install john
 
 Then we will be able to use john to reveal the password:
 
+1. Write the hashes into hash.txt:
+
+```
+nano ./hash.txt
 ```
 
+![alt text](/img/nano.png)
+
+2. Use John:
+
+```
+ohn --format=raw-sha1 --wordlist=/home/kali/Downloads/rockyou.txt /hash.txt
 ```
 
 The result is:
-![](/img/pwd.png)
+![alt text](/img/pwd.png)
+
+**Conclusion**: The password for both users is "bug"
