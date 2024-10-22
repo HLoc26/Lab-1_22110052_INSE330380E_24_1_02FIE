@@ -359,25 +359,30 @@ First, install John the Ripper:
 sudo apt-get install john
 ```
 
-The passwords are the same for 2 users. And it used SHA1 format to encrypt (40 characters).
+Or download the .zip file of John the Ripper from their [homepage](https://www.openwall.com/john/)
 
 Then we will be able to use john to reveal the password:
 
 1. Write the hashes into hash.txt:
-
-```
-nano ./hash.txt
-```
-
-![alt text](/img/nano.png)
+![image](https://github.com/user-attachments/assets/b0cff9e9-9e50-4d78-acac-d36206d1dc1d)
 
 2. Use John:
 
 ```
-john --format=raw-sha1 --wordlist=/home/kali/Downloads/rockyou.txt /hash.txt
+john "C:\Users\ACER\Downloads\hash.txt"
 ```
-
+Then, check the cracked password using
+```
+john --show --format=Raw-SHA1 "C:\Users\ACER\Downloads\hash.txt"
+```
 The result is:
-![alt text](/img/pwd.png)
+![image](https://github.com/user-attachments/assets/82cc9256-52bd-4b9e-8779-84ebe147f99c)
 
-**Conclusion**: The password for both users is "bug"
+**Conclusion**: The password for 6 users are:
+
+- seedalice
+- seedboby
+- seedadmin
+- seedryan
+- seedsamy
+- seedted
