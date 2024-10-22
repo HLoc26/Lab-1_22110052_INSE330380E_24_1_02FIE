@@ -302,7 +302,7 @@ nano ./hash.txt
 2. Use John:
 
 ```
-ohn --format=raw-sha1 --wordlist=/home/kali/Downloads/rockyou.txt /hash.txt
+john --format=raw-sha1 --wordlist=/home/kali/Downloads/rockyou.txt /hash.txt
 ```
 
 The result is:
