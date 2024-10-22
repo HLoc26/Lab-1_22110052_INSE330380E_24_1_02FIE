@@ -80,18 +80,6 @@ Result:
 
 ![Pic sh](./img/sh.png)
 
-### 1.3. Generated hex string from shellcode
-
-Since we will conduct the buffer overflow attack, we have to generated hex string from shellcode, so that we can inject through input.
-
-To generated the hexstring and print it onto terminal:
-
-```bash
-for i in $(objdump -d sh |grep "^ "|cut -f2); do echo -n '\x'$i; done; echo
-```
-
-![hex string](./img/hexstring.png)
-
 For later use, I will copy the output and paste into `hex.txt`
 
 ## 2. Analyze the vulnerable code
