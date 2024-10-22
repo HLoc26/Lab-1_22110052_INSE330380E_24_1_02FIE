@@ -287,6 +287,8 @@ First, install John the Ripper:
 sudo apt-get install john
 ```
 
+The passwords are the same for 2 users. And it used SHA1 format to encrypt (40 characters).
+
 Then we will be able to use john to reveal the password:
 
 1. Write the hashes into hash.txt:
